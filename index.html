@@ -29,6 +29,7 @@
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
@@ -215,6 +216,9 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -253,6 +257,14 @@ $(document).ready(function () {
 </div><!--/.navbar -->
 
 <div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
 
 
 
@@ -359,8 +371,63 @@ ggplot(all_2020, aes(x = gdp, y = life_expectancy, size = population, color = co
   transition_time(year) +
   transition_states(as.factor(year), state_length = 0)</code></pre>
 <p>Since the gif images didn’t show when I uploaded the html file to Github Pages, I have to use another way.</p>
-<p><a href="https://drive.google.com/file/d/1ExuknXdqWrswNCVpvRaj4BMdivVmY_IS/view?usp=sharing">The first chart with a linear x-axis</a></p>
-<p><a href="https://drive.google.com/file/d/1-33zTZiE4_JO1e1qmobsx3EDNvelOWAt/view?usp=sharing">The second chart with a log10 x-axis</a></p>
+<ul>
+<li><a href="https://drive.google.com/file/d/1ExuknXdqWrswNCVpvRaj4BMdivVmY_IS/view?usp=sharing">The first chart with a linear x-axis</a></li>
+</ul>
+<pre class="r"><code># log10 scale
+ggplot(all_2020, aes(x = gdp, y = life_expectancy, size = population, color = continent)) +
+  geom_point(alpha = 0.7) + 
+  scale_x_log10(
+    name = &quot;GDP per capita in USD&quot;,
+    breaks = c(0, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000),
+    labels = c(&quot;0&quot;, &quot;500&quot;, &quot;1,000&quot;, &quot;2,000&quot;, &quot;4,000&quot;, &quot;8,000&quot;, &quot;16,000&quot;, &quot;32,000&quot;, &quot;64,000&quot;, &quot;12,8000&quot;)
+    #limits = c(0,144000)
+  ) +
+  scale_y_continuous(
+    expand = c(0, 0),
+    name = &quot;Life expectancy in years&quot;,
+    breaks = c(0, 20, 40, 60, 80),
+    labels = c(0, 20, 40, 60, 80),
+    limits = c(-10,90)
+  ) + 
+  scale_size(
+    name = &quot;population&quot;, 
+    range = c(1,10),
+    breaks = c(1000000, 10000000, 100000000, 1000000000 ),
+    labels = c(&quot;1 mi&quot;, &quot;10 mi&quot;, &quot;100 mi&quot;, &quot;1 bi&quot;),
+    guide = guide_legend(
+      label.position = &quot;top&quot;,
+      override.aes = list(color = text_color)
+    )) + 
+  scale_color_manual(
+    values = c(&quot;#149BEDFF&quot;, &quot;#FA6B09FF&quot;, &quot;#A1C720FF&quot;, &quot;#FEC10BFF&quot;, &quot;#EC579AFF&quot;),
+    guide = guide_legend(
+    label.position = &quot;top&quot;
+    )
+  ) + #yarrr basel scale
+  theme(
+    axis.ticks = element_blank(),
+    axis.text = element_text(family = font, size = 11, color = text_color),
+    axis.title = element_text(family = font, size = 11, color = text_color),
+    panel.background = element_rect(fill = &quot;white&quot;),
+    panel.grid.major = element_line(color = &quot;#cbcbcb&quot;, size = 0.3, linetype = &quot;dashed&quot;),
+    axis.title.x = element_text(margin = margin (t = 10)),
+    axis.title.y = element_text(margin = margin (r = 10)),
+    legend.position = &quot;top&quot;,
+    legend.justification = &quot;center&quot;,
+    legend.text = element_text(family = font, color = text_color),
+    legend.title = element_blank(),
+    legend.key = element_blank(),#remove box around legend
+    legend.spacing.x = unit(20, &quot;pt&quot;), # distance between each circle
+    legend.key.width = unit(20, &quot;pt&quot;),
+    legend.box.spacing = unit(5, &quot;pt&quot;), #distance between legend and plot
+  ) +
+  geom_text(aes(x = 48000, y = 30, label = as.factor(year)), col = &quot;#cbcbcb&quot;, family = font, size = 15) +
+  transition_time(year) +
+  transition_states(as.factor(year), state_length = 0)</code></pre>
+<ul>
+<li><a href="https://drive.google.com/file/d/1-33zTZiE4_JO1e1qmobsx3EDNvelOWAt/view?usp=sharing">The second chart with a log10 x-axis</a></li>
+</ul>
 
 
 
@@ -395,6 +462,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
