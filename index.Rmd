@@ -1,0 +1,176 @@
+---
+output:
+  html_document:
+    code_folding: hide
+---
+
+<font size ="5"><center> **World Demographics Interactive Bubble Chart**</center></font>
+
+----
+
+The two bubble plot provides information about annual changes in the population, GDP per capita, and life expectancy of more than 130 countries in the world between 1800 and 2020. The dataset comes from [Gapminder](www.gapminder.org).
+
+**How to read the scatterplot** 
+
+- The x-axis is a continuous scale that represents GDP per capita of each country. The first plot uses the widely used linear x-axis, while the second plot uses the log10 x-asis to show the difference in GDP per cap better. 
+- The y-axis is a continuous scale that represents life expectancy of each country
+- The size of each circle denotes the population of each country
+- The color of each circle denotes the continent where the country is located. I use the basel palette in the `yarrr` package. 
+
+
+```{r message = FALSE, warning = FALSE, out.width = '100%', fig.align='center'}
+library(tidyverse)
+library(gapminder)
+library(gganimate)
+library(colorspace)
+
+text_color = "#353d42"
+caption_color = "#666666"
+font = "Avenir Next"
+
+#get a list of country and continent
+cont <- gapminder %>% 
+  select(country) %>% 
+  distinct() #get distinct rows/remove duplicate
+
+life_expectancy <- read.csv("/Users/huvi/Downloads/life_expectancy_years.csv") %>% 
+  filter(country %in% cont$country)
+
+population <- read.csv("/Users/huvi/Downloads/population_total.csv")%>% 
+  filter(country %in% cont$country) %>% 
+  pivot_longer(!country, names_to = "year", values_to = "population", names_prefix = "X") %>% 
+  mutate(year = as.numeric(year)) %>% 
+  filter(year <= 2020)
+
+gdp <- read.csv("/Users/huvi/Downloads/income_per_person_gdppercapita_ppp_inflation_adjusted.csv")%>%
+  filter(country %in% cont$country)%>% 
+  pivot_longer(!country, names_to = "year", values_to = "gdp", names_prefix = "X")%>% 
+  mutate(year = as.numeric(year)) %>% 
+  filter(year <= 2020)
+
+continent <- gapminder %>%
+  filter(country %in% life_expectancy$country) %>% 
+  select(country, continent) %>% 
+  distinct() #get distinct rows/remove duplicate
+
+cont_life <- inner_join(continent, life_expectancy)%>% 
+  pivot_longer(!c(country, continent), names_to = "year", values_to = "life_expectancy", names_prefix = "X")%>% 
+  mutate(year = as.numeric(year)) %>% 
+  filter(year <= 2020)
+
+cont_life_pop <- inner_join(cont_life, population)
+all <- inner_join(cont_life_pop, gdp)
+
+all_2020 <-  all %>% 
+  filter(year %in% c(1800, 1825, 1850, 1875, 1900, 1925, 1950, 1975, 2000, 2020)) %>% 
+  drop_na()
+
+ggplot(all_2020, aes(x = gdp, y = life_expectancy, size = population, color = continent)) +
+  geom_point(alpha = 0.7) + 
+  scale_x_continuous(
+    name = "GDP per capita in USD",
+    breaks = seq(0,140000,20000),
+    labels = c("0","20,000", "40,000", "60,000", "80,000", "100,000", "120,000", "140,000")
+    #limits = c(0,144000)
+  ) +
+  scale_y_continuous(
+    name = "Life expectancy in years",
+    breaks = c(0, 20, 40, 60, 80),
+    labels = c(0, 20, 40, 60, 80),
+    limits = c(0,90)
+  ) + 
+  scale_size(
+    name = "population", 
+    range = c(1,10),
+    breaks = c(1000000, 10000000, 100000000, 1000000000 ),
+    labels = c("1 mi", "10 mi", "100 mi", "1 bi"),
+    guide = guide_legend(
+      label.position = "top",
+      override.aes = list(color = text_color)
+
+    )) + 
+  scale_color_manual(
+    values = c("#149BEDFF", "#FA6B09FF", "#A1C720FF", "#FEC10BFF", "#EC579AFF"),
+    guide = guide_legend(
+    label.position = "top"
+    )
+  ) + #yarrr basel scale
+  theme(
+    axis.ticks = element_blank(),
+    axis.text = element_text(family = font, size = 11, color = text_color),
+    axis.title = element_text(family = font, size = 11, color = text_color),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(color = "#cbcbcb", size = 0.3, linetype = "dashed"),
+    axis.title.x = element_text(margin = margin (t = 10)),
+    legend.position = "top",
+    legend.justification = "center",
+    legend.text = element_text(family = font, color = text_color),
+    legend.title = element_blank(),
+    legend.key = element_blank(),#remove box around legend
+    legend.spacing.x = unit(20, "pt"), # distance between each circle
+    legend.key.width = unit(20, "pt"),
+    legend.box.spacing = unit(5, "pt"), #distance between legend and plot
+  ) +
+  geom_text(aes(x = 70000, y = 30, label = as.factor(year)), col = "#cbcbcb", family = font, size = 15) +
+  transition_time(year) +
+  transition_states(as.factor(year), state_length = 0)
+```
+
+```{r message = FALSE, warning = FALSE, out.width = '100%', fig.align='center'}
+# log10 scale
+ggplot(all_2020, aes(x = gdp, y = life_expectancy, size = population, color = continent)) +
+  geom_point(alpha = 0.7) + 
+  scale_x_log10(
+    name = "GDP per capita in USD",
+    breaks = c(0, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000),
+    labels = c("0", "500", "1,000", "2,000", "4,000", "8,000", "16,000", "32,000", "64,000", "12,8000")
+    #limits = c(0,144000)
+  ) +
+  scale_y_continuous(
+    expand = c(0, 0),
+    name = "Life expectancy in years",
+    breaks = c(0, 20, 40, 60, 80),
+    labels = c(0, 20, 40, 60, 80),
+    limits = c(-10,90)
+  ) + 
+  scale_size(
+    name = "population", 
+    range = c(1,10),
+    breaks = c(1000000, 10000000, 100000000, 1000000000 ),
+    labels = c("1 mi", "10 mi", "100 mi", "1 bi"),
+    guide = guide_legend(
+      label.position = "top",
+      override.aes = list(color = text_color)
+
+    )) + 
+  scale_color_manual(
+    values = c("#149BEDFF", "#FA6B09FF", "#A1C720FF", "#FEC10BFF", "#EC579AFF"),
+    guide = guide_legend(
+    label.position = "top"
+    )
+  ) + #yarrr basel scale
+  theme(
+    axis.ticks = element_blank(),
+    axis.text = element_text(family = font, size = 11, color = text_color),
+    axis.title = element_text(family = font, size = 11, color = text_color),
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major = element_line(color = "#cbcbcb", size = 0.3, linetype = "dashed"),
+    axis.title.x = element_text(margin = margin (t = 10)),
+    axis.title.y = element_text(margin = margin (r = 10)),
+    legend.position = "top",
+    legend.justification = "center",
+    legend.text = element_text(family = font, color = text_color),
+    legend.title = element_blank(),
+    legend.key = element_blank(),#remove box around legend
+    legend.spacing.x = unit(20, "pt"), # distance between each circle
+    legend.key.width = unit(20, "pt"),
+    legend.box.spacing = unit(5, "pt"), #distance between legend and plot
+  ) +
+  geom_text(aes(x = 48000, y = 30, label = as.factor(year)), col = "#cbcbcb", family = font, size = 15) +
+  transition_time(year) +
+  transition_states(as.factor(year), state_length = 0)
+```
+
+
+
+

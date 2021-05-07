@@ -1,0 +1,6 @@
+name: 
+navbar:
+  title: 
+  left:
+    - text: "Data Viz" 
+      href: index.html
